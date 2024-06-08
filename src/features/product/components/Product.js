@@ -16,14 +16,16 @@ import {
 } from "@heroicons/react/20/solid";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllProductsAsync, selectAllProducts } from "../productSlice";
+import {
+  fetchAllProductsAsync,
+  fetchProductsByFilterAsync,
+  selectAllProducts,
+} from "../productSlice";
 
 const sortOptions = [
-  { name: "Most Popular", href: "#", current: true },
-  { name: "Best Rating", href: "#", current: false },
-  { name: "Newest", href: "#", current: false },
-  { name: "Price: Low to High", href: "#", current: false },
-  { name: "Price: High to Low", href: "#", current: false },
+  { name: "Best Rating", sort: "rating", order: "desc", current: false },
+  { name: "Price: Low to High", sort: "price", order: "desc", current: false },
+  { name: "Price: High to Low", sort: "price", order: "asc", current: false },
 ];
 
 const filters = [
@@ -47,12 +49,24 @@ const filters = [
       { value: "Samsung", label: "Samsung", checked: false },
       { value: "OPPO", label: "OPPO", checked: false },
       { value: "Huawei", label: "Huawei", checked: false },
-      { value: "Microsoft Surface", label: "Microsoft Surface", checked: false },
+      {
+        value: "Microsoft Surface",
+        label: "Microsoft Surface",
+        checked: false,
+      },
       { value: "Infinix", label: "Infinix", checked: false },
       { value: "HP Pavilion", label: "HP Pavilion", checked: false },
-      { value: "Impression of Acqua Di Gio", label: "Impression of Acqua Di Gio", checked: false },
+      {
+        value: "Impression of Acqua Di Gio",
+        label: "Impression of Acqua Di Gio",
+        checked: false,
+      },
       { value: "Royal_Mirage", label: "Royal_Mirage", checked: false },
-      { value: "Fog Scent Xpressio", label: "Fog Scent Xpressio", checked: false },
+      {
+        value: "Fog Scent Xpressio",
+        label: "Fog Scent Xpressio",
+        checked: false,
+      },
       { value: "Al Munakh", label: "Al Munakh", checked: false },
       { value: "Lord - Al-Rehab", label: "Lord - Al-Rehab", checked: false },
       { value: "L'Oreal Paris", label: "L'Oreal Paris", checked: false },
@@ -62,7 +76,11 @@ const filters = [
       { value: "Fair & Clear", label: "Fair & Clear", checked: false },
       { value: "Saaf & Khaas", label: "Saaf & Khaas", checked: false },
       { value: "Bake Parlor Big", label: "Bake Parlor Big", checked: false },
-      { value: "Baking Food Items", label: "Baking Food Items", checked: false },
+      {
+        value: "Baking Food Items",
+        label: "Baking Food Items",
+        checked: false,
+      },
       { value: "fauji", label: "fauji", checked: false },
       { value: "Dry Rose", label: "Dry Rose", checked: false },
       { value: "Boho Decor", label: "Boho Decor", checked: false },
@@ -72,26 +90,35 @@ const filters = [
       { value: "Golden", label: "Golden", checked: false },
     ],
   },
-  
 ];
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-
 export default function Product() {
   const dispatch = useDispatch();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const products = useSelector(selectAllProducts);
+  const [filter, setFilter] = useState({});
 
-  const handleFilter = (e,section,option)=>{
-    console.log(section.id, option.value);
-  }
+  const handleFilter = (e, section, option) => {
+    const newFilter = { ...filter, [section.id]: option.value };
+    setFilter(newFilter);
+    dispatch(fetchProductsByFilterAsync(newFilter));
+    console.log(newFilter);
+  };
 
-  useEffect(()=>{
+  const handleSort = (e, option) => {
+    const newFilter = { ...filter, _sort: option.sort, _order:option.order };
+    setFilter(newFilter);
+    dispatch(fetchProductsByFilterAsync(newFilter));
+    console.log(newFilter);
+  };
+
+  useEffect(() => {
     dispatch(fetchAllProductsAsync());
-  },[dispatch])
+  }, [dispatch]);
 
   return (
     <div className="bg-white">
@@ -237,8 +264,8 @@ export default function Product() {
                       {sortOptions.map((option) => (
                         <Menu.Item key={option.name}>
                           {({ active }) => (
-                            <a
-                              href={option.href}
+                            <p
+                            onClick={e => handleSort(e, option)}
                               className={classNames(
                                 option.current
                                   ? "font-medium text-gray-900"
@@ -248,7 +275,7 @@ export default function Product() {
                               )}
                             >
                               {option.name}
-                            </a>
+                            </p>
                           )}
                         </Menu.Item>
                       ))}
@@ -323,8 +350,10 @@ export default function Product() {
                                   name={`${section.id}[]`}
                                   defaultValue={option.value}
                                   type="checkbox"
-                                  onChange={(e)=>handleFilter(e,section,option)}
                                   defaultChecked={option.checked}
+                                  onChange={(e) =>
+                                    handleFilter(e, section, option)
+                                  }
                                   className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                                 <label
@@ -372,17 +401,22 @@ export default function Product() {
                                 </h3>
                                 <p className="mt-1 text-sm text-gray-500">
                                   <StarIcon className="w-6 h-6 inline" />
-                                  <span className="align-bottom mx-1" >{product.rating}</span>
+                                  <span className="align-bottom mx-1">
+                                    {product.rating}
+                                  </span>
                                 </p>
                               </div>
                               <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                ${Math.round(product.price*(1-product.discountPercentage/100))}
-                              </p>
-                              <p className="text-sm my-1 font-medium line-through text-gray-500">
-                                ${product.price}
-                              </p>
-                             
+                                <p className="text-sm font-medium text-gray-900">
+                                  $
+                                  {Math.round(
+                                    product.price *
+                                      (1 - product.discountPercentage / 100)
+                                  )}
+                                </p>
+                                <p className="text-sm my-1 font-medium line-through text-gray-500">
+                                  ${product.price}
+                                </p>
                               </div>
                             </div>
                           </div>

@@ -12,8 +12,12 @@ export function fetchProductsByFilter(filter) {
     queryString += `${key} = ${filter[key]}&`;
   } 
   return new Promise(async (resolve) => {
-    const res = await fetch("http://localhost:8080/products?" + queryString);
+    const res = await fetch("http://localhost:8080/products?"+queryString);
     const data = await res.json();
     resolve({data});
   });
 }
+
+
+
+
